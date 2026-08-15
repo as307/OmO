@@ -17,3 +17,31 @@ active on this repo (one locally, one via the Codespace).
   editing it again, both Claude and Freebuff have touched it.
 - Prefer adding your own dated file in `OmO-claude/` or `OmO-freebuff/`
   over editing the other agent's files.
+
+## Update — same session, later
+
+### Live agent team created in the dashboard
+Memory Hub (`http://localhost:8125/#/team/agents`) now has 4 real agents (team `tdai-memory` / `team-2z1n59cudp`), each with a role prompt grounded in the actual OmanAI business (not generic templates):
+
+| Agent | ID | Role |
+|---|---|---|
+| HQ Orchestrator | `agt-22xb7h1qt7` | Routes tasks across the team, tracks blueprint checklist phases, pulls specialists from the 316-agent roster when needed |
+| WhatsApp Agent Ops | `agt-22uw3uv7zr` | Owns the Twilio+Claude WhatsApp AI agent product (the actual revenue service) |
+| Outreach & Sales | `agt-22vr3ycxtf` | Runs the Scopekeeper outreach pipeline, pilot-to-paid conversion, pricing |
+| Client Success & Onboarding | `agt-22wibafbgv` | Client-Onboarding-SOP, monthly reporting |
+
+Each has `skills` / `code_graph` / `llm_wiki` / `chat_memory` capability slots — currently empty (0 wiki sources, 0 skills ingested yet). Next real step: point Wiki Knowledge Base at the `agency-agents` repo and the OmanAI Drive playbooks so these agents actually have something to draw on.
+
+### OmniRouter started
+Local OpenAI-compatible LLM gateway now running on `http://127.0.0.1:20128` (`~/start-router.sh`) — gives Dify/gpt-researcher/etc. a local model endpoint without needing new external API keys.
+
+### Google Drive sweep — the real business context
+Confirmed from `/Omanai-ops/` (owner `aj@omanai.co`), dated back to 2026-06-23:
+- **OmanAI** = solo AI-native marketing agency, Muscat, Oman. Lead product: **WhatsApp AI Agents** for construction/aluminum/interior-fit-out clients (Phase 1), F&B (Phase 2).
+- Domain `omanai.co` (Namecheap), Google Workspace Business Starter, email `aj@omanai.co` — all live.
+- Planned stack: Claude API + Twilio WhatsApp Sandbox + Python/Flask backend — **Twilio and the Flask backend were still "pending" as of the last Drive update**; check whether `ai_company_server`/`ai-os` superseded this.
+- **Composio was evaluated and explicitly parked (Q3 2026 review) — "failed Scout gate, no production agents yet."** Don't re-introduce it into the blueprint stack without knowing why it failed.
+- Existing real playbooks already written and usable, not yet linked into any of this: `Agency-Master-Playbook.md`, `Client-Onboarding-SOP.md`, `Pricing-and-Proposal-Template.md`, `Monthly-Client-Report-Template.md`, `Pilot-to-Paid-Conversion-Script.md`, `Scopekeeper Outreach Pipeline`, `omanai-income-plan.md`, plus recurring `ops-digest-*` / `company-digest-*` docs (twice-daily, June–July 2026) suggesting an existing automated reporting habit worth continuing.
+- A large (11MB) Gemini Canvas doc, "Omani AI Lawyer Brain SaaS/ERP" — a separate product idea, not evaluated here.
+
+**Gap to flag:** `Project-Hub.md` (the Drive status doc) hasn't been updated since 2026-06-23, while `~/ai_company`, `~/ai-os`, `~/agency-agents`, `~/aaa-agency` show heavy activity through Aug 13-15. The Drive record and the actual filesystem state have drifted apart — worth reconciling so Drive reflects reality again.
