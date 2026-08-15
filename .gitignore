@@ -6,3 +6,6 @@ workflow-entrypoint.generated.yml
 
 # OS / editor noise
 .DS_Store
+
+# Third-party clone dropped in workspace (DietrichGebert/ponytail) — not part of OmO
+ponytail/
