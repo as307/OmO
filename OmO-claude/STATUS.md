@@ -107,3 +107,17 @@ Freebuff / whoever continues: this is the current blocker queue, most impactful 
 4. **The one real decision still open**: WhatsApp agents vs Scopekeeper vs n8n automation — pick one to lead with. Everything else (task boards, wikis, agent rosters) is scaffolding around a business decision only AJ can make. Don't let more infrastructure work substitute for surfacing this to him again if it's still unresolved.
 
 Claude will resume from this file when the session continues.
+
+## Update — the actual "ready SaaS": aj-omanai/oman-lead-bot
+
+User pointed to a private repo as "ready" — the exact one didn't exist (as307/- and as307/arabic-ai-lawyer-oman are both empty stubs, GitHub confirms 0 bytes on both). But a real one turned up under a **second GitHub account, `aj-omanai`**, found via Gmail CI-failure notifications, not Drive.
+
+**`aj-omanai/oman-lead-bot`** — "Oman Lead Bot": zero-cost AI-powered B2B lead gen for Oman/GCC.
+- Real stack: Vite + React 19 + TS, Tailwind v4 + shadcn/ui, **Convex** (backend/DB/auth), Stripe billing, official WhatsApp Business Cloud API (not Selenium), Framer Motion.
+- Real features: CSV/yellowpages lead import, AI scoring (Hot/Warm/Cold, Groq→Gemini fallback), Gulf-Arabic AI-drafted pitches, email outreach w/ ZeroBounce verification, WhatsApp outreach, auto 3-day follow-ups (human-approved), sales pipeline kanban, 3-tier billing (Free/$19 Pro/$49 Business), full Arabic RTL mode.
+- 18 tests, CI passing (green as of 2026-08-09). Human approves every send — matches the no-auto-send principle already set for the tdai-memory team.
+- **Not deployed**: `.env.example` has empty `VITE_CONVEX_URL`/`CONVEX_DEPLOYMENT` — code is done, nothing is live yet. Needs: `npx convex dev`/deploy, at minimum a free Groq or Gemini key to function, Stripe keys for billing, Meta WhatsApp Business tokens for WhatsApp sending.
+
+**This one repo functionally overlaps/supersedes two of the three competing offers** (WhatsApp outreach + general lead-gen automation) in a single packaged product — it doesn't touch Scopekeeper, which remains distinct.
+
+Also found and worth a look separately: `aj-omanai/gcc-ai-agent` (same-day predecessor, likely renamed into oman-lead-bot — 404s now), and an n8n trial that was never upgraded — workflows auto-delete ~90 days from 2026-07-28 (~Oct 26 deadline) unless downloaded or upgraded.
