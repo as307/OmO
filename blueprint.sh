@@ -3,21 +3,23 @@
 #  NEXUS AI MARKETING AGENCY — EXECUTABLE FINALIZE BLUEPRINT
 #  OmO core workspace · run once on a local device / GitHub Codespace
 # =============================================================================
-#  What this does (4 stages, all idempotent):
-#   1. CONNECT   — register MCP servers so Claude Code reaches the device's
-#                  agents/tools (graphify, chrome-devtools, GitKraken, …)
-#   2. BOOT      — start the Memory Hub stack (memory-core + hub + proxy)
-#                  with the filtered dashboard image when available
-#   3. PROVISION — create the Nexus Marketing Agency team: 5 agents,
-#                  6 skills, 3 tasks, kickoff memory, per-agent API keys
-#   4. REPORT    — print endpoints, credentials, and connection status
+#  What this does (5 stages, all idempotent):
+#   1. CONNECT    — register MCP servers so Claude Code reaches the device's
+#                   agents/tools (graphify, chrome-devtools, GitKraken, …)
+#   2. BOOT       — start the Memory Hub stack (memory-core + hub + proxy)
+#                   with the filtered dashboard image when available
+#   3. PROVISION  — create the Nexus Marketing Agency team: 5 agents,
+#                   6 skills, 3 tasks, kickoff memory, per-agent API keys
+#   4. ORCHESTRATE — Phase 1: deploy Dify (orchestrator) and wire it to the
+#                    Memory Hub (OmO-dify/scripts/deploy-dify.sh + wire-memoryhub.sh)
+#   5. REPORT     — print endpoints, credentials, and connection status
 #
 #  Usage:
 #    ./blueprint.sh              # run everything
 #    ./blueprint.sh --dry-run    # print the plan, change nothing
 #    ./blueprint.sh --stack-dir /path/to/TencentDB-Agent-Memory
-#    ./blueprint.sh --skip-claude --skip-stack --skip-team   # selective
-#  Env: TDAI_DIR, ADMIN_KEY, API_BASE, INSTANCE
+#    ./blueprint.sh --skip-claude --skip-stack --skip-team --skip-dify  # selective
+#  Env: TDAI_DIR, ADMIN_KEY, API_BASE, INSTANCE, DIFY_DIR, DIFY_PORT
 # =============================================================================
 set -uo pipefail
 
@@ -37,7 +39,9 @@ DRY_RUN=0
 SKIP_CLAUDE=0
 SKIP_STACK=0
 SKIP_TEAM=0
+SKIP_DIFY=0
 TDAI_DIR="${TDAI_DIR:-$HOME/tencentdb-agent-memory}"
+DIFY_DIR="${DIFY_DIR:-$HOME/dify}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -45,7 +49,9 @@ while [[ $# -gt 0 ]]; do
     --skip-claude)    SKIP_CLAUDE=1 ;;
     --skip-stack)     SKIP_STACK=1 ;;
     --skip-team)      SKIP_TEAM=1 ;;
+    --skip-dify)      SKIP_DIFY=1 ;;
     --stack-dir)      TDAI_DIR="$2"; shift ;;
+    --dify-dir)       DIFY_DIR="$2"; shift ;;
     *) echo "unknown option: $1" >&2; exit 1 ;;
   esac
   shift
@@ -138,8 +144,34 @@ if [[ $SKIP_TEAM -eq 0 ]]; then
   fi
 fi
 
-# --- stage 4 · report ---------------------------------------------------------------
-step "Stage 4 · final report"
+# --- stage 4 · orchestrate with Dify (Phase 1) ---------------------------------------
+if [[ $SKIP_DIFY -eq 0 ]]; then
+  step "Stage 4 · orchestrate with Dify (Phase 1)"
+  # Dify needs an LLM endpoint — boot OmniRouter when the launcher is present.
+  if [[ -x "$HOME/start-router.sh" ]]; then
+    run bash "$HOME/start-router.sh"
+  else
+    warn "OmniRouter launcher not found at ~/start-router.sh — Dify can use any OpenAI-compatible provider"
+  fi
+  DIFY_SCRIPT="$REPO_ROOT/OmO-dify/scripts/deploy-dify.sh"
+  WIRE_SCRIPT="$REPO_ROOT/OmO-dify/scripts/wire-memoryhub.sh"
+  if [[ -x "$DIFY_SCRIPT" ]]; then
+    DIFY_DIR="$DIFY_DIR" run bash "$DIFY_SCRIPT" \
+      || warn "Dify deploy step failed — see OmO-dify/README.md"
+  else
+    warn "Dify deploy script missing at $DIFY_SCRIPT"
+  fi
+  if [[ -x "$WIRE_SCRIPT" ]]; then
+    run bash "$WIRE_SCRIPT"
+  else
+    warn "Memory Hub wiring script missing at $WIRE_SCRIPT"
+  fi
+else
+  [[ $DRY_RUN -eq 1 ]] || warn "Stage 4 skipped (--skip-dify)"
+fi
+
+# --- stage 5 · report ---------------------------------------------------------------
+step "Stage 5 · final report"
 PANEL_URL="http://localhost:8125"
 if [[ $DRY_RUN -eq 0 ]] && curl -sf -m 3 -o /dev/null "$PANEL_URL/"; then
   ok "Memory Hub panel  → $PANEL_URL/#/"
@@ -152,6 +184,12 @@ if [[ $DRY_RUN -eq 0 ]] && curl -sf -m 3 -o /dev/null "$PANEL_URL/"; then
   PROXY_PORT="${PROXY_PORT:-8096}"
   if curl -sf -m 3 -o /dev/null "http://127.0.0.1:$PROXY_PORT/"; then
     ok "proxy ready — Claude Code via: export ANTHROPIC_BASE_URL=http://127.0.0.1:$PROXY_PORT/claude-code/default"
+  fi
+  DIFY_PORT="${DIFY_PORT:-80}"
+  if curl -sf -m 3 -o /dev/null "http://127.0.0.1:$DIFY_PORT/health"; then
+    ok "Dify orchestrator → http://localhost:$DIFY_PORT/ (console /console) — wired to Memory Hub per OmO-dify/README.md"
+  else
+    warn "Dify not up (or skipped) — run OmO-dify/scripts/deploy-dify.sh"
   fi
 else
   [[ $DRY_RUN -eq 1 ]] && ok "dry run complete — no changes made"

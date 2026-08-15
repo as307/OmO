@@ -1,0 +1,3 @@
+# Rendered by scripts/wire-memoryhub.sh — contains the Memory Hub admin key.
+# Never commit. Re-generate with: ./scripts/wire-memoryhub.sh
+workflow-entrypoint.generated.yml

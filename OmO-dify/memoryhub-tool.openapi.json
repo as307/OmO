@@ -1,0 +1,322 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Memory Hub (TencentDB Agent Memory) — team memory, skills, tasks",
+    "description": "Custom tool spec for Dify. Points at the Memory Hub panel API (http://localhost:8125/api/v1).\n\nAuth (both headers on every call except /meta/instances):\n  X-Tdai-Service-Id : instance id (default: 'default')\n  X-Tdai-User-Key   : user key, sk-mem-... (admin key lives in ~/tencentdb-agent-memory/deploy/global-images/.admin-key)\n\nResponse envelope: { \"code\": 0, \"message\": \"ok\", \"request_id\": \"...\", \"data\": {...} }\n(code === 0 means success; errors return the code as HTTP status.)\n\nWhen adding this tool in Dify, set X-Tdai-User-Key to the admin key value. See OmO-dify/README.md.",
+    "version": "1.0.0",
+    "contact": { "name": "OmO Phase 1 — Buffy" }
+  },
+  "servers": [
+    { "url": "http://localhost:8125", "description": "Memory Hub panel (host gateway from containers: http://host.containers.internal:8125 or http://host.docker.internal:8125)" }
+  ],
+  "tags": [
+    { "name": "Team" },
+    { "name": "Agent" },
+    { "name": "Task" },
+    { "name": "Skill" },
+    { "name": "Chat Memory" },
+    { "name": "Knowledge" },
+    { "name": "Auth" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "TdaiServiceId": { "type": "apiKey", "in": "header", "name": "X-Tdai-Service-Id" },
+      "TdaiUserKey": { "type": "apiKey", "in": "header", "name": "X-Tdai-User-Key" }
+    },
+    "schemas": {
+      "Envelope": {
+        "type": "object",
+        "description": "Unified response envelope. code === 0 means success.",
+        "properties": {
+          "code": { "type": "integer", "example": 0 },
+          "message": { "type": "string" },
+          "request_id": { "type": "string" },
+          "data": { "type": "object" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/meta/instances": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "List memory instances (no auth) — use to confirm the hub is reachable",
+        "operationId": "meta_instances_list",
+        "security": [],
+        "responses": {
+          "200": { "description": "Instances", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/meta/auth/verify": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Verify a user key. data.valid === true when the key is accepted.",
+        "operationId": "meta_auth_verify",
+        "security": [{ "TdaiServiceId": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["user_key"], "properties": { "user_key": { "type": "string", "description": "sk-mem-... user key to verify" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Verification result", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/meta/team/list": {
+      "post": {
+        "tags": ["Team"],
+        "summary": "List teams (paginated; body optional limit/offset)",
+        "operationId": "meta_team_list",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "user_id": { "type": "string" }, "limit": { "type": "integer", "default": 20 }, "offset": { "type": "integer", "default": 0 } } } } }
+        },
+        "responses": {
+          "200": { "description": "Team list", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/meta/team/create": {
+      "post": {
+        "tags": ["Team"],
+        "summary": "Create a team",
+        "operationId": "meta_team_create",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["name", "owner_user_id"], "properties": { "name": { "type": "string" }, "description": { "type": "string" }, "owner_user_id": { "type": "string" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Created team", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/meta/agent/list": {
+      "post": {
+        "tags": ["Agent"],
+        "summary": "List agents in a team",
+        "operationId": "meta_agent_list",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["team_id"], "properties": { "team_id": { "type": "string" }, "status": { "type": "string", "enum": ["active", "archived"] }, "limit": { "type": "integer", "default": 20 }, "offset": { "type": "integer", "default": 0 } } } } }
+        },
+        "responses": {
+          "200": { "description": "Agent list", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/meta/agent/get": {
+      "post": {
+        "tags": ["Agent"],
+        "summary": "Get one agent by id",
+        "operationId": "meta_agent_get",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["agent_id"], "properties": { "agent_id": { "type": "string" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Agent detail", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/meta/agent/create": {
+      "post": {
+        "tags": ["Agent"],
+        "summary": "Create an agent in a team",
+        "operationId": "meta_agent_create",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["team_id", "owner_user_id", "name", "prompt"], "properties": { "team_id": { "type": "string" }, "owner_user_id": { "type": "string" }, "name": { "type": "string" }, "description": { "type": "string" }, "prompt": { "type": "string" }, "visibility": { "type": "string", "enum": ["team", "private"], "default": "team" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Created agent", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/meta/task/list": {
+      "post": {
+        "tags": ["Task"],
+        "summary": "List tasks in a team (workbench)",
+        "operationId": "meta_task_list",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["team_id"], "properties": { "team_id": { "type": "string" }, "limit": { "type": "integer", "default": 20 }, "offset": { "type": "integer", "default": 0 } } } } }
+        },
+        "responses": {
+          "200": { "description": "Task list", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/meta/task/create": {
+      "post": {
+        "tags": ["Task"],
+        "summary": "Create a task in the workbench",
+        "operationId": "meta_task_create",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["team_id", "creator_user_id", "title"], "properties": { "team_id": { "type": "string" }, "creator_user_id": { "type": "string" }, "title": { "type": "string" }, "description": { "type": "string" }, "source_type": { "type": "string", "default": "manual" }, "risk_level": { "type": "string", "enum": ["low", "medium", "high"], "default": "low" }, "linked_agents": { "type": "array", "items": { "type": "object", "properties": { "agent_id": { "type": "string" } } } } } } } }
+        },
+        "responses": {
+          "200": { "description": "Created task", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/skill/list": {
+      "post": {
+        "tags": ["Skill"],
+        "summary": "List skills (nested pagination {limit,offset})",
+        "operationId": "skill_list",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "user_id": { "type": "string" }, "team_id": { "type": "string" }, "agent_id": { "type": "string" }, "pagination": { "type": "object", "properties": { "limit": { "type": "integer", "default": 50 }, "offset": { "type": "integer", "default": 0 } } } } } } }
+        },
+        "responses": {
+          "200": { "description": "Skill list", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/skill/search": {
+      "post": {
+        "tags": ["Skill"],
+        "summary": "Semantic/name search over skills",
+        "operationId": "skill_search",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["query"], "properties": { "query": { "type": "string" }, "team_id": { "type": "string" }, "agent_id": { "type": "string" }, "pagination": { "type": "object", "properties": { "limit": { "type": "integer", "default": 20 }, "offset": { "type": "integer", "default": 0 } } } } } } }
+        },
+        "responses": {
+          "200": { "description": "Skill search results", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/skill/get": {
+      "post": {
+        "tags": ["Skill"],
+        "summary": "Get one skill with content and manifest",
+        "operationId": "skill_get",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["skill_id"], "properties": { "skill_id": { "type": "string", "description": "skl-... id" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Skill detail", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/skill/create": {
+      "post": {
+        "tags": ["Skill"],
+        "summary": "Create a skill (owner agent writes it)",
+        "operationId": "skill_create",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["user_id", "team_id", "agent_id", "name", "content"], "properties": { "user_id": { "type": "string" }, "team_id": { "type": "string" }, "agent_id": { "type": "string" }, "name": { "type": "string" }, "content": { "type": "string", "description": "Markdown body (optional frontmatter name/description)" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Created skill", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/chat-memory/team-assets": {
+      "post": {
+        "tags": ["Chat Memory"],
+        "summary": "Team memory pool — all shared chat-memory blocks for a team",
+        "operationId": "chat_memory_team_assets",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["team_id"], "properties": { "team_id": { "type": "string" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Memory blocks", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/chat-memory/agent-fixed": {
+      "post": {
+        "tags": ["Chat Memory"],
+        "summary": "Fixed memory blocks bound to one agent",
+        "operationId": "chat_memory_agent_fixed",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["agent_id"], "properties": { "agent_id": { "type": "string", "description": "agt-... id" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Agent memory blocks", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/chat-memory/layer": {
+      "post": {
+        "tags": ["Chat Memory"],
+        "summary": "Lazy-load one layer (L0/L1/L2/L3) of a memory block",
+        "operationId": "chat_memory_layer",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["block_id", "layer"], "properties": { "block_id": { "type": "string" }, "layer": { "type": "string", "enum": ["L0", "L1", "L2", "L3"] }, "limit": { "type": "integer", "default": 50 }, "offset": { "type": "integer", "default": 0 }, "path": { "type": "string", "description": "L2 markdown path for single-file lazy read" }, "time_start": { "type": "string" }, "time_end": { "type": "string" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Layer items", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/chat-memory/import": {
+      "post": {
+        "tags": ["Chat Memory"],
+        "summary": "Import a conversation (L0) into an agent's memory",
+        "operationId": "chat_memory_import",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["team_id", "agent_id", "messages"], "properties": { "team_id": { "type": "string" }, "agent_id": { "type": "string" }, "session_id": { "type": "string" }, "messages": { "type": "array", "items": { "type": "object", "required": ["role", "content"], "properties": { "role": { "type": "string", "enum": ["user", "assistant"] }, "content": { "type": "string" } } } } } } } }
+        },
+        "responses": {
+          "200": { "description": "Import result (block_id, accepted_count)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/knowledge/wiki/team-assets": {
+      "post": {
+        "tags": ["Knowledge"],
+        "summary": "Wiki knowledge-base assets visible to a team",
+        "operationId": "knowledge_wiki_team_assets",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "team_id": { "type": "string" }, "user_id": { "type": "string" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Wiki assets", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    },
+    "/api/v1/meta/user-key/list": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "List user keys (agent tool access keys)",
+        "operationId": "meta_user_key_list",
+        "security": [{ "TdaiServiceId": [] }, { "TdaiUserKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "limit": { "type": "integer", "default": 20 }, "offset": { "type": "integer", "default": 0 } } } } }
+        },
+        "responses": {
+          "200": { "description": "Key list", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } }
+        }
+      }
+    }
+  }
+}

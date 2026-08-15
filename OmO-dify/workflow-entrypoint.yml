@@ -1,0 +1,246 @@
+# =============================================================================
+# OmO HQ — end-to-end workflow entrypoint (Dify chatflow DSL)
+# -----------------------------------------------------------------------------
+# Flow: user query → recall team memory from Memory Hub → answer with the
+# OmniRouter LLM (grounded in memory) → log the exchange back to memory.
+#
+# Import in Dify:  Studio → Import DSL → select this file (or the rendered
+#   workflow-entrypoint.generated.yml from scripts/wire-memoryhub.sh).
+#
+# Prerequisites (see OmO-dify/README.md):
+#   1. Dify deployed (scripts/deploy-dify.sh)
+#   2. Model provider configured in Dify: OpenAI-API-compatible →
+#      Base URL http://<host-gateway>:20128/v1 · API key: local-key ·
+#      Model: auto/best-chat
+#   3. The admin key placeholder below is replaced by wire-memoryhub.sh;
+#      if you import this file directly, paste the admin key in its place:
+#      cat ~/tencentdb-agent-memory/deploy/global-images/.admin-key
+#
+# NOTE: if the DSL import rejects this file (schema version drift), build the
+# same flow by hand — the node-by-node recipe is in README.md §5.
+# =============================================================================
+app:
+  description: >-
+    OmO HQ entrypoint. Every request first recalls the team's shared memory
+    (Nexus Marketing Agency) from the Memory Hub, answers grounded in that
+    memory via the OmniRouter gateway, and logs the exchange back so the team
+    memory stays fresh. Covers strategy, copy, SEO, analytics and ops.
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: chat
+  name: OmO HQ — memory-grounded assistant
+  use_icon_as_answer_icon: false
+kind: app
+version: 0.1.5
+workflow:
+  app:
+    enabled: true
+    features:
+      file_upload:
+        enabled: false
+    settings:
+      conversation_engine: workflow
+      debug: true
+      opening_statement: >-
+        Ask me anything about the agency — campaigns, copy, SEO, analytics,
+        ops. I answer from the team's shared memory and log the exchange back.
+      suggested_questions:
+        - What is our Q3 launch plan?
+        - Summarize the current SEO audit findings.
+        - Draft a WhatsApp AI Agents outreach message.
+      suggested_questions_after_answer:
+        enabled: false
+      speech_to_text:
+        enabled: false
+      text_to_speech:
+        enabled: false
+      retriever_resource:
+        enabled: false
+      annotation_reply:
+        enabled: false
+      user_input_form:
+        - paragraph:
+            label: sys.query
+            variable: sys.query
+            required: true
+            default: ''
+            max_length: 48000
+    variables: []
+  conversation_variables: []
+  edges:
+    - id: e-start-recall
+      source: start
+      target: recall-memory
+      sourceHandle: start
+      targetHandle: recall-memory
+    - id: e-recall-answer
+      source: recall-memory
+      target: answer
+      sourceHandle: recall-memory
+      targetHandle: answer
+    - id: e-answer-log
+      source: answer
+      target: log-memory
+      sourceHandle: answer
+      targetHandle: log-memory
+    - id: e-log-end
+      source: log-memory
+      target: end
+      sourceHandle: log-memory
+      targetHandle: end
+  graph:
+    edges:
+      - id: e-start-recall
+        source: start
+        target: recall-memory
+        sourceHandle: start
+        targetHandle: recall-memory
+      - id: e-recall-answer
+        source: recall-memory
+        target: answer
+        sourceHandle: recall-memory
+        targetHandle: answer
+      - id: e-answer-log
+        source: answer
+        target: log-memory
+        sourceHandle: answer
+        targetHandle: log-memory
+      - id: e-log-end
+        source: log-memory
+        target: end
+        sourceHandle: log-memory
+        targetHandle: end
+    nodes:
+      - data:
+          type: start
+          title: Start
+          variables:
+            - variable: sys.query
+              required: true
+              label: sys.query
+              max_length: 48000
+              min_length: 0
+        id: start
+        position:
+          x: 60
+          y: 240
+        type: start
+
+      - data:
+          type: http-request
+          title: Recall team memory
+          desc: Pull shared chat-memory blocks for the Nexus Marketing Agency team.
+          method: post
+          url: http://host.containers.internal:8125/api/v1/chat-memory/team-assets
+          authorization:
+            type: no-auth
+            config: null
+          headers: >-
+            X-Tdai-Service-Id: default
+
+            X-Tdai-User-Key: <admin-key>
+          params: '{}'
+          body:
+            type: json
+            data: '{"team_id":"team-22skqxyoio"}'
+          timeout: 30
+          response:
+            type: json
+          variables: []
+        id: recall-memory
+        position:
+          x: 300
+          y: 240
+        type: http-request
+
+      - data:
+          type: llm
+          title: Answer grounded in memory
+          desc: Answer the user grounded in the recalled team memory.
+          selected: false
+          provider: openai_api_compatible
+          model: auto/best-chat
+          model_config:
+            temperature: 0.2
+            top_p: 0.9
+            presence_penalty: 0
+            frequency_penalty: 0
+            max_tokens: 2000
+            context:
+              enabled: true
+              variable_selector: []
+              prompt: >-
+                You are OmO HQ's memory-grounded assistant for the Nexus
+                Marketing Agency team (Oman AI automation services).
+            prompt_template:
+              - role: system
+                text: >-
+                  You are OmO HQ's memory-grounded assistant. You work for the
+                  Nexus Marketing Agency team whose shared memory lives in the
+                  Memory Hub. Answer the user's question using ONLY the team
+                  memory provided. If the memory does not contain an answer,
+                  say so plainly and suggest what to store next. Be concise,
+                  practical and specific to the Oman AI services business
+                  (WhatsApp AI Agents, SEO, content, analytics, ops).
+              - role: user
+                text: >-
+                  Team memory (JSON): {{#recall-memory.body#}}
+
+
+                  User question: {{#start.sys.query#}}
+            vision:
+              enabled: false
+          memory: null
+        id: answer
+        position:
+          x: 560
+          y: 240
+        type: llm
+
+      - data:
+          type: http-request
+          title: Log exchange to memory
+          desc: Write the Q&A back into the Strategist's L0 memory so the team learns.
+          method: post
+          url: http://host.containers.internal:8125/api/v1/chat-memory/import
+          authorization:
+            type: no-auth
+            config: null
+          headers: >-
+            X-Tdai-Service-Id: default
+
+            X-Tdai-User-Key: <admin-key>
+          params: '{}'
+          body:
+            type: json
+            data: >-
+              {"team_id":"team-22skqxyoio","agent_id":"agt-22sksndvox","session_id":"dify-hq-entrypoint","messages":[{"role":"user","content":"{{#start.sys.query#}}"},{"role":"assistant","content":"{{#answer.text#}}"}]}
+          timeout: 60
+          response:
+            type: json
+          variables: []
+        id: log-memory
+        position:
+          x: 820
+          y: 240
+        type: http-request
+
+      - data:
+          type: end
+          title: End
+          outputs:
+            - variable: answer
+              value_selector:
+                - answer
+                - text
+        id: end
+        position:
+          x: 1080
+          y: 240
+        type: end
+    viewport:
+      x: 0
+      y: 0
+      zoom: 1
+  intro: >-
+    OmO HQ entrypoint — recall team memory, answer grounded in it, log back.
