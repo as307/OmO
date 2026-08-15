@@ -87,3 +87,12 @@ Also: **`omanai-income-plan.md` introduces a partner** (`as@omanai.co`) that doe
 - No sending mailbox connected in Apollo yet — nothing can actually send until one is.
 
 Neither of these get worked around — per your own pipeline doc, no email goes out un-reviewed, and permission blocks aren't mine to bypass.
+
+## Update — OmniRouter moved to Codespace, cross-team tasks, session paused
+
+- **OmniRouter moved off local device into the Codespace** (was 23% CPU / 1.3GB RAM locally). Killed here, reinstalled + running in `redesigned-potato-...github.dev` (`omniroute serve`, confirmed `http=200` on :20128 there).
+- **Claude Code CLI installed in the Codespace** (`v2.1.233`) so work can actually happen there going forward. Freebuff itself (the manicode binary) was NOT copied in — it's a ~140MB proprietary binary, not portable via a simple install; flagged rather than faked.
+- **Cross-team coordination task posted** on `Nexus Marketing Agency`'s board (Freebuff's team): proposed split — their team owns marketing/content (SEO, copy, campaign strategy, matches their 3 existing tasks), our team (`tdai-memory`) owns sales/ops (WhatsApp product, Scopekeeper, onboarding, business-context grounding).
+- **4 of 5 per-agent tasks created** on `tdai-memory`'s board: HQ Orchestrator (reconcile 3-offer conflict), WhatsApp Agent Ops (Twilio sandbox + pilot config), Outreach & Sales (resume Aluminum Plus/Muscat warm outreach), Client Success & Onboarding (prep onboarding pipeline).
+- **5th task incomplete**: "[AI Tools Outreach] Escalate Apollo blockers to AJ" — form was filled but the Chrome extension disconnected before the Create click landed; unconfirmed whether it saved. **Verify and recreate if missing**: `localhost:8125` → tdai-memory team → Task Board.
+- Session paused here (browser extension down, needs Chrome reconnected on the user's end to continue browser-driven work). Everything Bash/API-based stayed intact.
