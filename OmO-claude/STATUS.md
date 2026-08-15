@@ -45,3 +45,18 @@ Confirmed from `/Omanai-ops/` (owner `aj@omanai.co`), dated back to 2026-06-23:
 - A large (11MB) Gemini Canvas doc, "Omani AI Lawyer Brain SaaS/ERP" — a separate product idea, not evaluated here.
 
 **Gap to flag:** `Project-Hub.md` (the Drive status doc) hasn't been updated since 2026-06-23, while `~/ai_company`, `~/ai-os`, `~/agency-agents`, `~/aaa-agency` show heavy activity through Aug 13-15. The Drive record and the actual filesystem state have drifted apart — worth reconciling so Drive reflects reality again.
+
+## Update — wired the Wiki to agency-agents
+
+Created a Team Wiki Pool knowledge base named `agency-agents` (`wiki-tw5ysnnv`) in Memory Hub and seeded it with 6 curated agent personas (condensed, with links back to the full source in `aj-omanai/agency-agents`), chosen for direct relevance to the real OmanAI business rather than uploading all 316:
+
+- `agents-orchestrator.md` — pipeline/task orchestration
+- `specialized-chief-of-staff.md` — coordination, process ownership
+- `sales-outbound-strategist.md` — signal-based outreach (maps to Scopekeeper pipeline)
+- `sales-proposal-strategist.md` — win themes, pricing narrative
+- `finance-bookkeeper-controller.md` — close process, reconciliation
+- `marketing-content-creator.md` — editorial/content strategy
+
+Ingestion is running server-side via the `MEMORY_LLM_*` config in `.env` (OpenRouter, `openai/gpt-oss-20b:free`) — each doc gets a real LLM analysis pass, ~minutes per doc on the free tier, so this finishes on its own in the `tdai-memory-hub` container; no need to keep a browser open. Once status flips from "Processing" to "Ready" (`localhost:8125/#/wiki`), use "Allocate" to attach it to the 4 agents so their `llm_wiki` capability actually has content.
+
+**Not done / next:** the other ~310 agency-agents personas aren't in this wiki — added only what's relevant now. Add more by the same "Markdown" paste flow if a task needs a division not covered here.
