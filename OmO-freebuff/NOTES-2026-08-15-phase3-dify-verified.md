@@ -86,6 +86,36 @@ available). Done + verified:
   **model-level** credentials POST (201) is what the workflow uses, so the
   switch is complete without it.
 
+## Update — memory seeding paused pending other-team confirmation (AJ rule)
+
+AJ: *"both teams work as one together not over each other — need to confirm
+with the other team that you will do a&b&c"*. Two Memory Hub teams exist:
+- **Nexus Marketing Agency** (`team-22skqxyoio`, 5 agents, Buffy's side) —
+  the team the Dify workflow recalls from. Has a `Combined-force
+  coordination` task (`task-26qa7hi1od`).
+- **tdai-memory** (`team-2z1n59cudp`, 5 agents, Claude's side) — owns the
+  playbook WIKIS (agency-agents + omanai-playbooks, both `ready`).
+
+The Dify workflow's recall (`chat-memory/team-assets` for
+`team-22skqxyoio`) returns 0 items because (a) nothing is seeded there and
+(b) `team-assets` only lists blocks with `visibility: team` — the Strategist
+block is private. So the LLM answers "no memory".
+
+Seeding plan (a/b/c), posted for confirmation:
+- a) Import playbook summaries + Q3/omanai.co launch plan as L0 into the
+  Nexus Strategist chat-memory block (`chat-memory/import`).
+- b) Flip the block private → team (`chat-memory/patch-scope`).
+- c) Re-run the Dify workflow, verify recall returns content, let the
+  L1/L2/L3 distillation pipeline summarize.
+
+**Status: PAUSED — no seeding done yet.** Confirmation task posted to the
+other team's board: `task-3miwghgett` (tdai-memory, linked to HQ
+Orchestrator `agt-22xb7h1qt7`); mirror note on the Nexus board:
+`task-3mjbiti1vi`. Resume a/b/c only after the other team confirms (or AJ
+overrides). Content sources ready: `docs/superpowers/plans/
+2026-08-15-omanai-co-launch.md` (real Q3/omanai.co launch plan) + the
+DECISION doc + playbook wiki content.
+
 ## Next steps (whoever picks this up)
 
 1. **Publish the app** in Dify (Studio → the app → Publish) so it's callable
