@@ -19,7 +19,7 @@ Memory, running at `http://localhost:8125`) as its shared team-memory backend.
 user query
   → Dify chatflow (workflow-entrypoint)
       → HTTP node 1: recall team memory   POST /api/v1/chat-memory/team-assets
-      → LLM node:   answer grounded in memory  (OmniRouter :20128, auto/best-chat)
+      → LLM node:   answer grounded in memory  (OpenRouter, openai/gpt-oss-20b:free)
       → HTTP node 2: log exchange back    POST /api/v1/chat-memory/import (→ Strategist)
   → answer returned
 ```
@@ -37,9 +37,10 @@ grounded in it, and writes the exchange back so the team memory compounds.
 
 # 3. One-time UI: register the model provider
 #    Settings → Model Provider → OpenAI-API-compatible:
-#      Base URL  http://host.docker.internal:20128/v1   (podman: host.containers.internal)
-#      API Key   local-key
-#      Model     auto/best-chat
+#      Base URL  https://openrouter.ai/api/v1
+#      API Key   sk-or-…  (OpenRouter key; Memory Hub already has one in
+#                 tencentdb-agent-memory/deploy/global-images/.env)
+#      Model     openai/gpt-oss-20b:free
 
 # 4. Wire the Memory Hub (validates hub, renders workflow, prints import steps)
 ./scripts/wire-memoryhub.sh
@@ -62,7 +63,13 @@ grounded in it, and writes the exchange back so the team memory compounds.
   OpenAI provider at OmniRouter as a bonus.
 - On docker-on-Linux writes `docker-compose.override.yml` with
   `host.docker.internal: host-gateway` so Dify's api/worker/plugin_daemon can
-  reach the host's Memory Hub (`:8125`) and OmniRouter (`:20128`).
+  reach the host's Memory Hub (`:8125`).
+
+> **Model provider:** the workflow LLM node calls **OpenRouter**
+> (`https://openrouter.ai/api/v1`, model `openai/gpt-oss-20b:free`) via the
+> OpenAI-API-compatible provider — no local OmniRouter needed. The OpenRouter
+> key is already in `~/tencentdb-agent-memory/deploy/global-images/.env`
+> (`MEMORY_LLM_API_KEY`); paste the same value into Dify's provider config.
 - Starts the stack, waits for `/health`, prints the UI next-steps.
 
 ### `scripts/wire-memoryhub.sh`
@@ -101,7 +108,7 @@ the memory write target). The `<admin-key>` placeholder must be replaced —
    - Body (JSON): `{"team_id":"team-22skqxyoio"}`
    - Connect Start → this node.
 4. **LLM** node (title: *Answer grounded in memory*):
-   - Provider `OpenAI-API-compatible`, model `auto/best-chat`
+   - Provider `OpenAI-API-compatible`, model `openai/gpt-oss-20b:free`
    - System prompt: *"Answer using ONLY the team memory provided. If the
      memory lacks an answer, say so and suggest what to store next."*
    - User prompt: `Team memory (JSON): {{#recall-memory.body#}}\n\nUser

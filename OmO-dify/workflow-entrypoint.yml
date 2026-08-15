@@ -2,7 +2,7 @@
 # OmO HQ — end-to-end workflow entrypoint (Dify chatflow DSL)
 # -----------------------------------------------------------------------------
 # Flow: user query → recall team memory from Memory Hub → answer with the
-# OmniRouter LLM (grounded in memory) → log the exchange back to memory.
+# OpenRouter LLM (grounded in memory) → log the exchange back to memory.
 #
 # Import in Dify:  Studio → Import DSL → select this file (or the rendered
 #   workflow-entrypoint.generated.yml from scripts/wire-memoryhub.sh).
@@ -10,8 +10,8 @@
 # Prerequisites (see OmO-dify/README.md):
 #   1. Dify deployed (scripts/deploy-dify.sh)
 #   2. Model provider configured in Dify: OpenAI-API-compatible →
-#      Base URL http://<host-gateway>:20128/v1 · API key: local-key ·
-#      Model: auto/best-chat
+#      Base URL https://openrouter.ai/api/v1 · API key: sk-or-… ·
+#      Model: openai/gpt-oss-20b:free
 #   3. The admin key placeholder below is replaced by wire-memoryhub.sh;
 #      if you import this file directly, paste the admin key in its place:
 #      cat ~/tencentdb-agent-memory/deploy/global-images/.admin-key
@@ -21,9 +21,8 @@
 # =============================================================================
 app:
   description: >-
-    OmO HQ entrypoint. Every request first recalls the team's shared memory
-    (Nexus Marketing Agency) from the Memory Hub, answers grounded in that
-    memory via the OmniRouter gateway, and logs the exchange back so the team
+    OmO HQ entrypoint. Every request first recalls the team's shared    memory (Nexus Marketing Agency) from the Memory Hub, answers grounded in that
+    memory via the OpenRouter gateway, and logs the exchange back so the team
     memory stays fresh. Covers strategy, copy, SEO, analytics and ops.
   icon: 🤖
   icon_background: '#FFEAD5'
@@ -57,7 +56,7 @@ model_config:
   external_data_tools: []
   model:
     provider: openai_api_compatible
-    name: auto/best-chat
+    name: openai/gpt-oss-20b:free
     mode: chat
     features:
       - agent-thought
@@ -218,7 +217,7 @@ workflow:
           selected: false
           model:
             provider: openai_api_compatible
-            name: auto/best-chat
+            name: openai/gpt-oss-20b:free
             mode: chat
             completion_params:
               temperature: 0.2

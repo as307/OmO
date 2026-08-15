@@ -66,14 +66,34 @@ memory → OmniRouter answer → write exchange back to Strategist memory.
   podman, unprivileged port) — resolved via `EXPOSE_NGINX_PORT=8080`; that's
   why Dify is at `:8080`, not `:80`.
 
+## Update — model switched to OpenRouter free (OmniRouter no longer needed)
+
+AJ: *"use openrouter free models"* → Dify's LLM node now calls **OpenRouter**
+(`https://openrouter.ai/api/v1`) with the existing key from
+`tencentdb-agent-memory/deploy/global-images/.env` (`MEMORY_LLM_API_KEY`)
+and model **`openai/gpt-oss-20b:free`** (picked by Buffy — the free model
+already proven in this stack via Memory Hub ingestion; 16 free models were
+available). Done + verified:
+
+- Provider model registered: `openai/gpt-oss-20b:free` on
+  `langgenius/openai_api_compatible/openai_api_compatible` (valid).
+- DSL (`workflow-entrypoint.yml`) + generated re-rendered with the model;
+  README + `wire-memoryhub.sh` steps updated to OpenRouter.
+- App re-imported (new id `685c7dc8-…`, old `cb5f9e31-…` deleted) and **ran
+  successfully end-to-end**: recall → OpenRouter answer (335 tokens) →
+  log-back `imported: true, accepted_count: 2`.
+- Note: provider-level PUT needed a `credential_id` (400); the
+  **model-level** credentials POST (201) is what the workflow uses, so the
+  switch is complete without it.
+
 ## Next steps (whoever picks this up)
 
-1. **Restore OmniRouter** (the only broken piece) — pick option 1 above if a
-   codespace budget is fine, else free RAM before option 2.
-2. **Publish the app** in Dify (Studio → the app → Publish) so it's callable
+1. **Publish the app** in Dify (Studio → the app → Publish) so it's callable
    from the web/API, not just draft-debug; optionally create an API key.
-3. **Feed the team memory** — the recall node returned 0 items because the
+2. **Feed the team memory** — the recall node returned 0 items because the
    hub has nothing for `team-22skqxyoio` yet; seed it (playbook summaries,
    Q3 plan) so answers stop being "no memory".
-4. Decide the real orchestrator if not settled (Dify vs `aaa-agency` NEXUS vs
+3. Decide the real orchestrator if not settled (Dify vs `aaa-agency` NEXUS vs
    `nexus-executive`) — HQ_STATUS.md §5 item 3 remains open.
+4. OmniRouter (down) is no longer required by Dify; it's only needed for
+   tools that still point at `:20128`. Restore it only if something needs it.
