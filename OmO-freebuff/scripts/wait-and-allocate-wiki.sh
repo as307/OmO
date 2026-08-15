@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 # wait-and-allocate-wiki.sh — poll a Memory Hub wiki until ingestion is ready,
-# then allocate it to the tdai-memory team agents.
+# then allocate it to every active agent in the tdai-memory team.
 #
 # Used to finish the last session's work: the omanai-playbooks wiki was created
 # and 7 raw docs uploaded, but ingestion was never triggered. This script waits
 # for ingestion to finish (free-tier LLM: ~4-5 min per doc) and then allocates
-# the ready wiki to all 4 tdai-memory agents so their llm_wiki capability has
-# content.
+# the ready wiki to all active team agents so their llm_wiki capability has
+# content. Target agents resolve dynamically (no hardcoded ids).
 #
 # Usage:
 #   ./wait-and-allocate-wiki.sh <wiki_id> [--agents "id1 id2 ..."]
-# Env: ADMIN_KEY, API_BASE, INSTANCE
+# Env: ADMIN_KEY, API_BASE, KB_BASE, INSTANCE, AGENTS
 set -uo pipefail
 
 API_BASE="${API_BASE:-http://localhost:8125/api/v1}"
@@ -18,10 +18,8 @@ KB_BASE="${KB_BASE:-http://localhost:8424/v3}"
 INSTANCE="${INSTANCE:-default}"
 KEY_FILE="${ADMIN_KEY:-$HOME/tencentdb-agent-memory/deploy/global-images/.admin-key}"
 TEAM_ID="team-2z1n59cudp"
-DEFAULT_AGENTS="agt-22xb7h1qt7 agt-22uw3uv7zr agt-22vr3ycxtf agt-22wibafbgv" # HQ Orchestrator, WhatsApp Ops, Outreach & Sales, Client Success
 
 WIKI_ID="${1:-wiki-5hp5bhvp}"
-AGENTS="${AGENTS:-$DEFAULT_AGENTS}"
 
 if [[ ! -f "$KEY_FILE" ]]; then
   echo "✘ admin key not found at $KEY_FILE" >&2; exit 1
@@ -29,6 +27,17 @@ fi
 USER_KEY="$(cat "$KEY_FILE")"
 
 log() { echo "[$(date +%H:%M:%S)] $*"; }
+
+# Resolve target agents dynamically: every active agent in the team.
+AGENTS="${AGENTS:-}"
+if [[ -z "$AGENTS" ]]; then
+  AGENTS="$(curl -s -m 10 -X POST "$API_BASE/meta/agent/list" \
+    -H "x-tdai-service-id: $INSTANCE" -H "x-tdai-user-key: $USER_KEY" \
+    -H "Content-Type: application/json" \
+    -d "{\"team_id\":\"$TEAM_ID\",\"status\":\"active\"}" \
+    | python3 -c "import sys,json; d=json.load(sys.stdin); print(' '.join(a['agent_id'] for a in d.get('data',{}).get('items',[])))" 2>/dev/null)"
+  log "resolved ${AGENTS:-none} from team $TEAM_ID"
+fi
 
 wiki_status() {
   curl -s -m 10 -X POST "$KB_BASE/wiki/get" \
@@ -61,7 +70,7 @@ for i in $(seq 1 120); do
           log "  ✘ allocate failed -> $agent : $resp"
         fi
       done
-      log "✔ done — $ok/$(( $(echo "$AGENTS" | wc -w) )) agents bound to $WIKI_ID"
+      log "✔ done — $ok/$(echo "$AGENTS" | wc -w) agents bound to $WIKI_ID"
       exit 0
       ;;
     failed*)
