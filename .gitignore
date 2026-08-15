@@ -1,0 +1,8 @@
+# Serena (IDE MCP toolkit) — per-project local state, not for versioning
+.serena/
+
+# Secrets / rendered configs (see OmO-dify/.gitignore)
+workflow-entrypoint.generated.yml
+
+# OS / editor noise
+.DS_Store
