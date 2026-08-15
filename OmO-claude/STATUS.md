@@ -60,3 +60,30 @@ Created a Team Wiki Pool knowledge base named `agency-agents` (`wiki-tw5ysnnv`) 
 Ingestion is running server-side via the `MEMORY_LLM_*` config in `.env` (OpenRouter, `openai/gpt-oss-20b:free`) — each doc gets a real LLM analysis pass, ~minutes per doc on the free tier, so this finishes on its own in the `tdai-memory-hub` container; no need to keep a browser open. Once status flips from "Processing" to "Ready" (`localhost:8125/#/wiki`), use "Allocate" to attach it to the 4 agents so their `llm_wiki` capability actually has content.
 
 **Not done / next:** the other ~310 agency-agents personas aren't in this wiki — added only what's relevant now. Add more by the same "Markdown" paste flow if a task needs a division not covered here.
+
+## Update — real playbooks loaded, 5th agent added, a real conflict surfaced
+
+### New wiki: `omanai-playbooks`
+Pulled and loaded the actual operating documents from Drive (not personas — your real sales/ops docs), ingesting now:
+`agency-master-playbook.md`, `client-onboarding-sop.md`, `pricing-and-proposal-template.md`, `pilot-to-paid-conversion-script.md`, `scopekeeper-outreach-pipeline.md`, `omanai-income-plan.md`, `whatsapp-agent-service-brief.md`.
+
+### 5th agent: AI Tools Outreach (Scopekeeper) — `agt-24if4hb2km`
+Discovered a **second real business line** buried in today's Drive docs, distinct enough it needed its own agent: **Scopekeeper**, a prompt-governance tool (code at `~/scopekeeper`, not currently running), offered free to AI/SaaS companies as a lead magnet. Different ICP (CTO/Head of Eng/Founder at AI companies) than the WhatsApp product (Oman construction/aluminum/fit-out). Real progress already exists: Apollo.io connected (190 lead credits, 5000 AI credits, aj@omanai.co), 3 real leads sourced (DevsData, The AI Automation Agency, AgentMail), 3 emails drafted, 1 Apollo contact created.
+
+**This agent is explicitly instructed to never send an email or activate a sequence without your review** — that's your own documented design, not something I'm loosening.
+
+### A real conflict you should resolve, not me
+Found **three parallel, not-yet-reconciled offers** across the Drive docs:
+1. WhatsApp AI Agents → Oman construction/aluminum/fit-out (Agency-Master-Playbook, most built-out, has a full sales/onboarding SOP)
+2. Scopekeeper → AI/SaaS companies (today's doc, has 3 leads and drafts ready)
+3. n8n automation service → general GCC SMEs (omanai-income-plan.md, dated as the "AJ + Partner" plan, explicitly says *"pick ONE to lead with — running four offers with two people is the most common way this stalls"*)
+
+Also: **`omanai-income-plan.md` introduces a partner** (`as@omanai.co`) that doesn't appear in the older Agency-Master-Playbook — this is the real answer to "which email, aj@ or as@" from earlier in this conversation. Apollo's credits are tied to `aj@`; the income plan flags this exact ownership question as unresolved.
+
+**I'm not picking one of these three for you.** That's a business call, not an org call. Flagging it clearly is the job.
+
+### Two blockers only you can clear (not agent work)
+- Apollo contact creation is blocked by this Claude Code session's own permission classifier (same thing that blocked a `git push` earlier) — needs a permission rule added, or add the last 2 contacts manually in Apollo.
+- No sending mailbox connected in Apollo yet — nothing can actually send until one is.
+
+Neither of these get worked around — per your own pipeline doc, no email goes out un-reviewed, and permission blocks aren't mine to bypass.
