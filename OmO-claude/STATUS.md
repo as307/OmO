@@ -121,3 +121,53 @@ User pointed to a private repo as "ready" — the exact one didn't exist (as307/
 **This one repo functionally overlaps/supersedes two of the three competing offers** (WhatsApp outreach + general lead-gen automation) in a single packaged product — it doesn't touch Scopekeeper, which remains distinct.
 
 Also found and worth a look separately: `aj-omanai/gcc-ai-agent` (same-day predecessor, likely renamed into oman-lead-bot — 404s now), and an n8n trial that was never upgraded — workflows auto-delete ~90 days from 2026-07-28 (~Oct 26 deadline) unless downloaded or upgraded.
+
+## Update — wrote the missing `OmO/scripts/memory.sh` ("blueprint Stage 2")
+
+Freebuff's `memory-panel/` overlay (README, `install.sh`, `build-filtered.sh`,
+`apply.sh`, `start.sh` — all verified real and correct against the actual
+Panel source) documented and called a script that never existed:
+`scripts/memory.sh`, described as the piece that "prefers the locally-built
+`localhost/memory-hub-filtered` image when present — so every stack boot
+serves the dashboard automatically." `start.sh` already called it
+(`../scripts/memory.sh --dir "$TDAI_DIR"`); it just 404'd. `blueprint.sh`
+Stage 2 had the *same* logic inlined separately, with a real bug: it
+overrides `MEMORY_HUB_IMAGE` by `cp .env .env.bp-bak; sed -i ...; [restore
+after boot]` — an in-place mutation of the *shared* `.env`. If the process
+dies between the sed and the restore (kill, crash, Ctrl-C), the real `.env`
+is left pointed at a machine-local-only image tag, silently breaking the
+next boot for anyone else who reads that file.
+
+Wrote `OmO/scripts/memory.sh` for real, as a sibling of `core/`/`hq/`/
+`memory-panel/` (matches the path `start.sh` already resolves). Design:
+checks for the checkout + `.env` (clones/scaffolds like the existing
+scripts do), checks for `localhost/memory-hub-filtered:latest`, and when
+present applies the override through a **throwaway derived env file**
+(`ENV_FILE=<mktemp, chmod 600>` passed to `start-all.sh` — a mechanism
+`deploy/_lib.sh` already supports via `ENV_FILE="${ENV_FILE:-$SCRIPT_DIR/.env}"`)
+instead of touching the real `.env` at all. `trap cleanup EXIT` removes the
+temp file regardless of success/failure. Then rewired `blueprint.sh` Stage 2
+to just call this script, so the two entry points (blueprint.sh and
+memory-panel/start.sh) share one implementation instead of drifting.
+
+**Verified end-to-end, not just written:**
+- Fallback path (no filtered image, the real current state — never built
+  this session): ran it against the live `TDAI_DIR`, stack came back up
+  clean (panel 200, knowledge 200), real `.env` untouched.
+- Override path: temporarily `docker tag`'d the running hub image as
+  `localhost/memory-hub-filtered:latest` (no full image build needed to
+  test the logic), ran `memory.sh` again — confirmed via
+  `docker inspect tdai-memory-hub --format '{{.Config.Image}}'` that the
+  hub *actually booted on the filtered tag*, confirmed the real `.env`'s
+  `MEMORY_HUB_IMAGE` line was byte-for-byte unchanged throughout, confirmed
+  the derived temp file was gone after (trap fired). Then untagged the test
+  image and restarted the stack back onto the real default image — no
+  artifacts left behind.
+- `blueprint.sh --dry-run` confirms Stage 2 now resolves to
+  `bash /home/yaman/OmO/core/../scripts/memory.sh --dir <TDAI_DIR>` correctly.
+
+Committed + pushed to `as307/OmO` (`5494a52`). `OmO/scripts/memory.sh`
+itself is **not** in a git repo — same as `memory-panel/`, it's local-only
+workspace scratch, consistent with how Freebuff left that whole subsystem
+uncommitted so far. If/when `memory-panel/` gets committed somewhere,
+`scripts/memory.sh` should move with it.
