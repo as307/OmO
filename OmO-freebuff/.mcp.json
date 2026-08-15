@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "graphify": {
+      "command": "graphify-mcp",
+      "args": [],
+      "env": {}
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"],
+      "env": {}
+    }
+  }
+}
