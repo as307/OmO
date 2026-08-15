@@ -105,29 +105,14 @@ fi
 # --- stage 2 · boot the Memory Hub stack ------------------------------------------
 if [[ $SKIP_STACK -eq 0 && -n "$DOCKER_BIN" ]]; then
   step "Stage 2 · boot Memory Hub stack"
-  if [[ ! -d "$TDAI_DIR/deploy/global-images" ]]; then
-    warn "stack source not at $TDAI_DIR — cloning upstream"
-    run git clone --depth 1 https://github.com/TencentCloud/TencentDB-Agent-Memory.git "$TDAI_DIR" \
-      || { fail "clone failed — set TDAI_DIR to an existing checkout"; exit 1; }
-  fi
-  ENV_FILE="$TDAI_DIR/deploy/global-images/.env"
-  if [[ ! -f "$ENV_FILE" ]]; then
-    run cp "$TDAI_DIR/deploy/global-images/.env.example" "$ENV_FILE"
-    fail "create $ENV_FILE from .env.example and fill the LLM keys, then re-run"
-    exit 1
-  fi
-  # Prefer the locally-built filtered hub image (keeps the dashboard filter live).
-  FILTERED_IMAGE="localhost/memory-hub-filtered:latest"
-  if run bash -c "docker image inspect '$FILTERED_IMAGE' >/dev/null 2>&1"; then
-    ok "using filtered dashboard image: $FILTERED_IMAGE"
-    run cp "$ENV_FILE" "$ENV_FILE.bp-bak"
-    run sed -i "s|^MEMORY_HUB_IMAGE=.*|MEMORY_HUB_IMAGE=$FILTERED_IMAGE|" "$ENV_FILE"
-  else
-    warn "no local filtered image — hub will use the image in .env (dashboard filter not included)"
-  fi
-  run bash "$TDAI_DIR/deploy/global-images/start-all.sh"
-  run cp "$ENV_FILE.bp-bak" "$ENV_FILE" 2>/dev/null || true
-  ok "stack started (memory-core :8420 · hub :8125/:8424 · proxy :8096)"
+  # scripts/memory.sh owns checkout/.env checks, filtered-image preference
+  # (via a throwaway derived env file — never edits the real .env), and the
+  # start-all.sh call. Single source of truth: memory-panel/start.sh calls
+  # the same script, so this and the dashboard installer never drift apart.
+  # OmO/scripts/ is a sibling of OmO/core (this repo), not inside it — same
+  # path memory-panel/start.sh resolves via ../scripts/memory.sh.
+  run bash "$REPO_ROOT/../scripts/memory.sh" --dir "$TDAI_DIR" \
+    || { fail "Stage 2 failed — see scripts/memory.sh output above"; exit 1; }
 else
   [[ $DRY_RUN -eq 1 ]] || warn "Stage 2 skipped"
 fi
