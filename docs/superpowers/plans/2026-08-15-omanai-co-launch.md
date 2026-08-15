@@ -22,7 +22,7 @@
 
 ## Part A — Deploy `oman-lead-bot` to production
 
-### Task A1: Clone and prepare the repo
+### Task 1: Clone and prepare the repo
 
 **Files:**
 - Create (via clone): `~/oman-lead-bot/` (full existing repo tree from `aj-omanai/oman-lead-bot`)
@@ -71,7 +71,7 @@ Expected: empty output.
 
 ---
 
-### Task A2: Deploy the Convex backend to production
+### Task 2: Deploy the Convex backend to production
 
 **Files:**
 - Modify: `~/oman-lead-bot/.env.local` (created by the Convex CLI, gitignored — never commit this file)
@@ -119,7 +119,7 @@ Expected: `http=200` or `http=404` (Convex's root path is often unrouted — a r
 
 ---
 
-### Task A3: Deploy the frontend to Vercel, wired to production Convex
+### Task 3: Deploy the frontend to Vercel, wired to production Convex
 
 **Files:**
 - Create: `~/oman-lead-bot/vercel.json` (if not already present in the cloned repo — check first)
@@ -219,7 +219,7 @@ Each component is single-responsibility: `ServiceCard` renders one service, `Ser
 
 ---
 
-### Task B1: Scaffold the project
+### Task 4: Scaffold the project
 
 **Files:**
 - Create: `~/omanai-co/package.json`, `vite.config.ts`, `tsconfig.json`, `tailwind.config.ts`, `postcss.config.js`, `index.html`, `src/main.tsx`, `src/index.css`
@@ -334,7 +334,7 @@ git commit -m "chore: scaffold omanai-co with Vite, React, Tailwind, Vitest"
 
 ---
 
-### Task B2: Services data + `ServiceCard` component (TDD)
+### Task 5: Services data + `ServiceCard` component (TDD)
 
 **Files:**
 - Create: `src/data/services.ts`
@@ -470,7 +470,7 @@ git commit -m "feat: add services data and ServiceCard component"
 
 ---
 
-### Task B3: `Services` section, `Hero`, `Header`, `Footer`, assemble `App`
+### Task 6: `Services` section, `Hero`, `Header`, `Footer`, assemble `App`
 
 **Files:**
 - Create: `src/components/Services.tsx`, `src/components/Hero.tsx`, `src/components/Header.tsx`, `src/components/Footer.tsx`
@@ -625,7 +625,7 @@ git commit -m "feat: assemble landing page — hero, services, header, footer"
 
 ---
 
-### Task B4: CI workflow
+### Task 7: CI workflow
 
 **Files:**
 - Create: `~/omanai-co/.github/workflows/ci.yml`
@@ -674,7 +674,7 @@ git commit -m "ci: add test + typecheck workflow"
 
 ---
 
-### Task B5: Create the GitHub repo and push
+### Task 8: Create the GitHub repo and push
 
 **Files:** none new — this task pushes the existing local repo.
 
@@ -702,7 +702,7 @@ Expected: `"status":"completed"`, `"conclusion":"success"` (may need to poll aga
 
 ---
 
-### Task B6: Deploy to Vercel under `omanai.co`, wire DNS, verify both sites live
+### Task 9: Deploy to Vercel under `omanai.co`, wire DNS, verify both sites live
 
 **Files:**
 - Create: `~/omanai-co/vercel.json` (only if the app needs SPA rewrites — a static multi-section page on one route does not, but add it for future routes)
