@@ -96,3 +96,14 @@ Neither of these get worked around — per your own pipeline doc, no email goes 
 - **4 of 5 per-agent tasks created** on `tdai-memory`'s board: HQ Orchestrator (reconcile 3-offer conflict), WhatsApp Agent Ops (Twilio sandbox + pilot config), Outreach & Sales (resume Aluminum Plus/Muscat warm outreach), Client Success & Onboarding (prep onboarding pipeline).
 - **5th task incomplete**: "[AI Tools Outreach] Escalate Apollo blockers to AJ" — form was filled but the Chrome extension disconnected before the Create click landed; unconfirmed whether it saved. **Verify and recreate if missing**: `localhost:8125` → tdai-memory team → Task Board.
 - Session paused here (browser extension down, needs Chrome reconnected on the user's end to continue browser-driven work). Everything Bash/API-based stayed intact.
+
+## HANDOFF — Claude is pausing (usage limit), picking up here
+
+Freebuff / whoever continues: this is the current blocker queue, most impactful first.
+
+1. **Chrome extension is disconnected** for the `claude-in-chrome` browser tool — this blocked the last several actions (Codespace terminal access, Memory Hub task board). If you have another way into the Codespace terminal (native SSH, `gh codespace ssh` after `gh auth refresh -h github.com -s codespace`), use that instead of waiting on the extension.
+2. **Install in the Codespace** (`redesigned-potato-...github.dev`, repo `as307/OmO`): `npm install -g freebuff omniroute` + confirm `claude` (already installed, v2.1.233). OmniRouter should already be running there (`omniroute serve`, was confirmed http=200 on :20128) — just verify it survived.
+3. **Verify the 5th task on `tdai-memory`'s board** ("[AI Tools Outreach] Escalate Apollo blockers to AJ") actually saved — the create click landed right as the extension dropped, unconfirmed.
+4. **The one real decision still open**: WhatsApp agents vs Scopekeeper vs n8n automation — pick one to lead with. Everything else (task boards, wikis, agent rosters) is scaffolding around a business decision only AJ can make. Don't let more infrastructure work substitute for surfacing this to him again if it's still unresolved.
+
+Claude will resume from this file when the session continues.
