@@ -27,11 +27,65 @@ app:
     memory stays fresh. Covers strategy, copy, SEO, analytics and ops.
   icon: 🤖
   icon_background: '#FFEAD5'
-  mode: chat
+  mode: advanced-chat
   name: OmO HQ — memory-grounded assistant
   use_icon_as_answer_icon: false
 kind: app
 version: 0.1.5
+model_config:
+  opening_statement: >-
+    Ask me anything about the agency — campaigns, copy, SEO, analytics,
+    ops. I answer from the team's shared memory and log the exchange back.
+  suggested_questions:
+    - What is our Q3 launch plan?
+    - Summarize the current SEO audit findings.
+    - Draft a WhatsApp AI Agents outreach message.
+  suggested_questions_after_answer:
+    enabled: false
+  speech_to_text:
+    enabled: false
+  text_to_speech:
+    enabled: false
+  retriever_resource:
+    enabled: false
+  annotation_reply:
+    enabled: false
+  more_like_this:
+    enabled: false
+  sensitive_word_avoidance:
+    enabled: false
+  external_data_tools: []
+  model:
+    provider: openai_api_compatible
+    name: auto/best-chat
+    mode: chat
+    features:
+      - agent-thought
+    parameters:
+      temperature: 0.2
+      top_p: 0.9
+      presence_penalty: 0
+      frequency_penalty: 0
+      max_tokens: 2000
+  user_input_form:
+    - paragraph:
+        label: sys.query
+        variable: sys.query
+        required: true
+        default: ''
+        max_length: 48000
+  pre_prompt: ''
+  agent_mode:
+    enabled: false
+  prompt_type: simple
+  chat_prompt_config: {}
+  completion_prompt_config: {}
+  dataset_configs:
+    datasets:
+      datasets: []
+    retrieval_setting: {}
+  file_upload:
+    enabled: false
 workflow:
   app:
     enabled: true
@@ -117,6 +171,7 @@ workflow:
           variables:
             - variable: sys.query
               required: true
+              type: paragraph
               label: sys.query
               max_length: 48000
               min_length: 0
@@ -143,7 +198,10 @@ workflow:
           body:
             type: json
             data: '{"team_id":"team-22skqxyoio"}'
-          timeout: 30
+          timeout:
+            connect: 10
+            read: 30
+            write: 30
           response:
             type: json
           variables: []
@@ -158,39 +216,38 @@ workflow:
           title: Answer grounded in memory
           desc: Answer the user grounded in the recalled team memory.
           selected: false
-          provider: openai_api_compatible
-          model: auto/best-chat
-          model_config:
-            temperature: 0.2
-            top_p: 0.9
-            presence_penalty: 0
-            frequency_penalty: 0
-            max_tokens: 2000
-            context:
-              enabled: true
-              variable_selector: []
-              prompt: >-
-                You are OmO HQ's memory-grounded assistant for the Nexus
-                Marketing Agency team (Oman AI automation services).
-            prompt_template:
-              - role: system
-                text: >-
-                  You are OmO HQ's memory-grounded assistant. You work for the
-                  Nexus Marketing Agency team whose shared memory lives in the
-                  Memory Hub. Answer the user's question using ONLY the team
-                  memory provided. If the memory does not contain an answer,
-                  say so plainly and suggest what to store next. Be concise,
-                  practical and specific to the Oman AI services business
-                  (WhatsApp AI Agents, SEO, content, analytics, ops).
-              - role: user
-                text: >-
-                  Team memory (JSON): {{#recall-memory.body#}}
+          model:
+            provider: openai_api_compatible
+            name: auto/best-chat
+            mode: chat
+            completion_params:
+              temperature: 0.2
+              top_p: 0.9
+              presence_penalty: 0
+              frequency_penalty: 0
+              max_tokens: 2000
+          prompt_template:
+            - role: system
+              text: >-
+                You are OmO HQ's memory-grounded assistant. You work for the
+                Nexus Marketing Agency team whose shared memory lives in the
+                Memory Hub. Answer the user's question using ONLY the team
+                memory provided. If the memory does not contain an answer,
+                say so plainly and suggest what to store next. Be concise,
+                practical and specific to the Oman AI services business
+                (WhatsApp AI Agents, SEO, content, analytics, ops).
+            - role: user
+              text: >-
+                Team memory (JSON): {{#recall-memory.body#}}
 
 
-                  User question: {{#start.sys.query#}}
-            vision:
-              enabled: false
+                User question: {{#sys.query#}}
+          context:
+            enabled: true
+            variable_selector: []
           memory: null
+          vision:
+            enabled: false
         id: answer
         position:
           x: 560
@@ -214,8 +271,11 @@ workflow:
           body:
             type: json
             data: >-
-              {"team_id":"team-22skqxyoio","agent_id":"agt-22sksndvox","session_id":"dify-hq-entrypoint","messages":[{"role":"user","content":"{{#start.sys.query#}}"},{"role":"assistant","content":"{{#answer.text#}}"}]}
-          timeout: 60
+              {"team_id":"team-22skqxyoio","agent_id":"agt-22sksndvox","session_id":"dify-hq-entrypoint","messages":[{"role":"user","content":"{{#sys.query#}}"},{"role":"assistant","content":"{{#answer.text#}}"}]}
+          timeout:
+            connect: 10
+            read: 60
+            write: 60
           response:
             type: json
           variables: []
