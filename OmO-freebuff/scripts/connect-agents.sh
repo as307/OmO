@@ -85,7 +85,21 @@ else
   fi
 fi
 
-# --- 4) composio — 250+ app integrations (needs COMPOSIO_API_KEY) --------------
+# --- 4) serena — IDE-grade semantic code tools for the coding agent ------------------
+# Install: uv tool install -p 3.13 serena-agent && serena init
+if command -v serena >/dev/null 2>&1; then
+  if has_server serena; then
+    ok "already registered: serena"
+  elif "$CLAUDE_BIN" mcp add -s "$SCOPE" serena -- serena start-mcp-server --context=claude-code --project-from-cwd; then
+    ok "registered: serena (serena start-mcp-server)"
+  else
+    fail "could not register serena"
+  fi
+else
+  warn "serena not found — skipping (uv tool install -p 3.13 serena-agent && serena init)"
+fi
+
+# --- 5) composio — 250+ app integrations (needs COMPOSIO_API_KEY) --------------
 if [ -n "${COMPOSIO_API_KEY:-}" ]; then
   if has_server composio; then
     ok "already registered: composio"
@@ -99,7 +113,7 @@ else
   warn "COMPOSIO_API_KEY not set — skipping composio (export it, then re-run)"
 fi
 
-# --- 5) freebuff — the remote Freebuff agent (needs FREEBUFF_MCP_URL) ----------
+# --- 6) freebuff — the remote Freebuff agent (needs FREEBUFF_MCP_URL) ----------
 if [ -n "${FREEBUFF_MCP_URL:-}" ]; then
   if [ -n "${FREEBUFF_MCP_TOKEN:-}" ]; then
     add_http freebuff "$FREEBUFF_MCP_URL" "Authorization: Bearer $FREEBUFF_MCP_TOKEN"
@@ -110,7 +124,7 @@ else
   warn "FREEBUFF_MCP_URL not set — skipping freebuff (export it, then re-run)"
 fi
 
-# --- 6) health check ------------------------------------------------------------
+# --- 7) health check ------------------------------------------------------------
 echo
 log "== MCP server status =="
 "$CLAUDE_BIN" mcp list
